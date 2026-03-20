@@ -1,73 +1,111 @@
 <x-layout>
-    <div class="max-w-7xl mx-auto p-6  ">
-        <div class="flex justify-between items-center mb-6">
-            <h2 class="text-2xl font-bold">ყველა პოსტის მართვა</h2>
-            
-            <form action="{{ route('admin.posts') }}" method="GET" class="flex gap-2">
-                <input type="text" name="search" value="{{ request('search') }}" 
-                    placeholder="ძებნა ..." 
-                    class="border border-gray-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                <button type="submit" class="bg-gray-800 text-white px-4 py-2 rounded-lg text-sm font-semibold">ძებნა</button>
-            </form>
+<div class="max-w-7xl mx-auto px-4 py-10">
+    
+    {{-- ჰედერი და ძებნა --}}
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-6">
+        <div>
+            <h2 class="text-3xl font-black text-gray-900 tracking-tight flex items-center gap-3">
+                <span class="bg-blue-600 text-white p-2 rounded-xl">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                </span>
+                პოსტების მართვა
+            </h2> 
         </div>
 
-        <div class="bg-white shadow-sm border border-gray-100 rounded-xl overflow-hidden">
+        <form action="{{ route('admin.posts') }}" method="GET" class="relative group w-full md:w-auto">
+            <input type="text" name="search" value="{{ request('search') }}" 
+                   placeholder="მოძებნეთ სათაურით..." 
+                   class="w-full md:w-80 pl-11 pr-4 py-3 bg-white border border-gray-200 rounded-2xl text-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition outline-none shadow-sm">
+            <div class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            </div>
+             <button type="submit" class="bg-white border border-gray-200 rounded-2xl px-4 py-3 text-sm font-semibold">ძებნა</button>
+        </form>
+    </div>
+
+    {{-- ცხრილი --}}
+    <div class="bg-white rounded-[2rem] shadow-xl shadow-gray-200/40 border border-gray-100 overflow-hidden">
+        <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
-                <thead class="bg-gray-50 border-b border-gray-100">
-                    <tr>
-                        <th class="p-4 text-xs font-bold uppercase text-gray-500">ავტორი</th>
-                        <th class="p-4 text-xs font-bold uppercase text-gray-500">სათაური</th>
-                        <th class="p-4 text-xs font-bold uppercase text-gray-500">სტატუსი</th>
-                        <th class="p-4 text-xs font-bold uppercase text-gray-500">თარიღი</th>
-                        <th class="p-4 text-xs font-bold uppercase text-gray-500 text-center">მოქმედება</th>
-                        <th class="p-4 text-xs font-bold uppercase text-gray-500 text-right">წაშლა</th> 
+                <thead>
+                    <tr class="bg-gray-50/50 border-b border-gray-100">
+                        <th class="py-5 px-6 text-[10px] font-black uppercase tracking-[0.15em] text-gray-400">ავტორი</th>
+                        <th class="py-5 px-6 text-[10px] font-black uppercase tracking-[0.15em] text-gray-400">პოსტის სათაური</th>
+                        <th class="py-5 px-6 text-[10px] font-black uppercase tracking-[0.15em] text-gray-400 text-center">სტატუსი</th>
+                        <th class="py-5 px-6 text-[10px] font-black uppercase tracking-[0.15em] text-gray-400 text-center">თარიღი</th>
+                        <th class="py-5 px-6 text-[10px] font-black uppercase tracking-[0.15em] text-gray-400 text-right">მოქმედება</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-100">
+                <tbody class="divide-y divide-gray-50">
                     @foreach($posts as $post)
-                    <tr class="hover:bg-gray-50 transition">
-                        <td class="p-4 text-sm font-medium text-gray-700">{{ $post->user->name }}</td>
-                        <td class="p-4 text-sm text-gray-600">{{ Str::limit($post->title, 40) }}</td>
-                        <td class="p-4 text-sm">
-                            @if($post->status === 'approved')
-                                <span class="bg-green-100 text-green-700 px-2 py-1 rounded-md text-xs font-bold">Approved</span>
-                            @elseif($post->status === 'pending')
-                                <span class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded-md text-xs font-bold">Pending</span>
-                            @else
-                                <span class="bg-red-100 text-red-700 px-2 py-1 rounded-md text-xs font-bold">Rejected</span>
-                            @endif
+                    <tr class="hover:bg-blue-50/30 transition duration-150">
+                        <td class="py-5 px-6">
+                            <div class="flex items-center gap-2">
+                                <div class="w-2 h-2 rounded-full bg-blue-400"></div>
+                                <span class="text-sm font-bold text-gray-800">{{ $post->user->name }}</span>
+                            </div>
                         </td>
-                        <td class="p-4 text-sm text-gray-500">{{ $post->created_at->format('d M, Y') }}</td>
-                        <td class="p-4  flex justify-center items-center gap-x-3">
-                            <form action="{{ route('admin.posts.reReview', $post->id) }}" method="POST" class="inline-block">
-                                @csrf
-                                <button type="submit" 
-                                        onclick="return confirm('დარწმუნებული ხართ, რომ გსურთ პოსტი დაუბრუნოთ მოდერატორს?')"
-                                        class="text-orange-600 hover:text-orange-900 font-bold bg-orange-50 px-3 py-1 rounded-md transition border border-orange-200 cursor-pointer text-xs">
-                                    🔄 ხელახალი განხილვა
-                                </button>
-                            </form>
-                            <a href="{{ route('posts.show', $post) }}" class="text-blue-600 hover:underline text-sm font-bold">ნახვა</a>
+                        <td class="py-5 px-6">
+                            <p class="text-sm text-gray-600 font-medium line-clamp-1">{{ $post->title }}</p>
                         </td>
-                        <td class="p-4 text-right text-sm text-gray-500">
-                            <form action="{{ route('admin.posts.destroy', $post->id) }}" method="POST" class="inline-block">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" 
-                                        onclick="return confirm('ნამდვილად გსურთ პოსტის სამუდამოდ წაშლა?')" 
-                                        class="text-red-600 hover:text-red-900 font-bold bg-red-50 px-3 py-1 rounded-md text-xs cursor-pointer">
-                                    🗑️ წაშლა
-                                </button>
-                            </form>
+                        <td class="py-5 px-6 text-center">
+                            @php
+                                $statusClasses = [
+                                    'approved' => 'bg-emerald-50 text-emerald-600 border-emerald-100',
+                                    'pending'  => 'bg-amber-50 text-amber-600 border-amber-100',
+                                    'rejected' => 'bg-rose-50 text-rose-600 border-rose-100'
+                                ];
+                                $statusLabels = [
+                                    'approved' => 'დადასტურებული',
+                                    'pending'  => 'მოლოდინში',
+                                    'rejected' => 'უარყოფილი'
+                                ];
+                            @endphp
+                            <span class="inline-flex px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter border {{ $statusClasses[$post->status] ?? 'bg-gray-50' }}">
+                                {{ $statusLabels[$post->status] ?? $post->status }}
+                            </span>
+                        </td>
+                        <td class="py-5 px-6 text-center text-xs font-bold text-gray-400 tracking-tighter">
+                            {{ $post->created_at->format('d/m/Y') }}
+                        </td>
+                        <td class="py-5 px-6 text-right space-x-1">
+                            <div class="flex justify-end items-center gap-2">
+                                {{-- ნახვა --}}
+                                <a href="{{ route('posts.show', $post) }}" class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition" title="ნახვა">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                </a>
+
+                                {{-- ხელახალი განხილვა --}}
+                                <form action="{{ route('admin.posts.reReview', $post->id) }}" method="POST" class="inline">
+                                    @csrf
+                                    <button type="submit" 
+                                            onclick="return confirm('დაუბრუნდეს მოდერაციას?')"
+                                            class="p-2 text-orange-400 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition" title="მოდერაციაზე დაბრუნება">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                                    </button>
+                                </form>
+
+                                {{-- წაშლა --}}
+                                <form action="{{ route('admin.posts.destroy', $post->id) }}" method="POST" class="inline">
+                                    @csrf @method('DELETE')
+                                    <button type="submit" 
+                                            onclick="return confirm('სამუდამოდ წაიშალოს?')"
+                                            class="p-2 text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition" title="წაშლა">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                    </button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
                     @endforeach
                 </tbody>
             </table>
         </div>
-
-        <div class="mt-6">
-            {{ $posts->links() }}
-        </div>
     </div>
+
+    {{-- Pagination --}}
+    <div class="mt-8 px-2">
+        {{ $posts->links() }}
+    </div>
+</div>
 </x-layout>
