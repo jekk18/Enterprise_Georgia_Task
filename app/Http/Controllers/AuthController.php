@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Role;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 { 
@@ -33,8 +36,32 @@ class AuthController extends Controller
 
     return back()->withErrors(['email' => 'მონაცემები არასწორია']);
 } 
+
+ public function showRegister() {
+        return view('auth.register');
+    }
+
+public function register(Request $request) {
+    $request->validate([
+        'name' => 'required|string|max:255',
+        'email' => 'required|string|email|max:255|unique:users',
+        'password' => 'required|string|min:2|confirmed', // confirmed ითხოვს password_confirmation ველს
+    ]);
+
+    $userRole = Role::where('name', 'user')->first();
+    $user = User::create([
+        'name' => $request->name,
+        'email' => $request->email,
+        'password' => Hash::make($request->password),
+        'role_id' => $userRole->id, // ყველა ახალი დარეგისტრირებული არის "User"
+    ]);
+
+    Auth::login($user);
+
+    return redirect()->route('profile')->with('success', 'რეგისტრაცია წარმატებით გაიარეთ!');
+}
    
-    public function profile() {
+public function profile() {
     $user = Auth::user();
  
     $user->load(['posts' => function ($query) {

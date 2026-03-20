@@ -11,9 +11,15 @@ use Illuminate\Support\Facades\Auth;
 // 1. ღია როუტები (ყველასთვის)
 Route::get('/', [PostController::class, 'index'])->name('posts.index');
 Route::get('/post/{post}', [PostController::class, 'show'])->name('posts.show');
+
+Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
+Route::post('/register', [AuthController::class, 'register']);
+
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
-Route::get('/logout', [AuthController::class, 'logout'])->name('logout');
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
+ 
 
 // 2. საერთო ავტორიზებული როუტები (ნებისმიერი შესული იუზერისთვის)
 Route::middleware(['auth'])->group(function () {
@@ -36,9 +42,13 @@ Route::middleware(['auth'])->group(function () {
 });
 
 // 3. ადმინის ზონა (მხოლოდ Admin)
-Route::middleware(['auth', 'role:admin'])->group(function () {
-    Route::get('/admin/users', [AdminController::class, 'index'])->name('admin.users');
-    Route::post('/admin/users/{user}/update-role', [AdminController::class, 'updateRole'])->name('admin.updateRole');
+    Route::middleware(['auth', 'role:admin'])->group(function () {
+        Route::get('/admin/users', [AdminController::class, 'index'])->name('admin.users');
+        Route::get('/posts', [AdminController::class, 'allPosts'])->name('admin.posts');
+        Route::post('/admin/posts/{post}/re-review', [AdminController::class, 'reReview'])->name('admin.posts.reReview');
+        Route::delete('/posts/{post}', [AdminController::class, 'destroyPost'])->name('admin.posts.destroy');
+        // Route::post('/admin/users/{user}/update-role', [AdminController::class, 'updateRole'])->name('admin.updateRole');
+        Route::patch('/admin/users/{user}/update-role', [AdminController::class, 'updateRole'])->name('admin.updateRole');
 });
 
 // 4. მოდერატორის ზონა (მხოლოდ Moderator)
