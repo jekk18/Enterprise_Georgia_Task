@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Post extends Model
 {
@@ -14,5 +15,15 @@ class Post extends Model
 
     public function comments() {
         return $this->hasMany(Comment::class)->whereNull('parent_id');  
-}
+    }
+    public function translations(): HasMany
+    {
+        return $this->hasMany(PostTranslation::class);
+    }
+
+    // public function getTranslation()
+    // {
+    //     // აბრუნებს მიმდინარე ენის თარგმანს, ან პირველს რაც მოხვდება
+    //     return $this->translations->first() ?? $this;
+    // }
 }

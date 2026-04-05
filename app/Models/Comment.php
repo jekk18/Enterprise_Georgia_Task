@@ -9,19 +9,19 @@ class Comment extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['user_id', 'post_id', 'parent_id', 'content', 'is_edited'];
+    protected $fillable = ['user_id', 'post_id', 'parent_id', 'content', 'locale', 'is_edited'];
 
-    // ვინ დაწერა კომენტარი
+     
     public function user() {
         return $this->belongsTo(User::class);
     }
 
-    // რომელ პოსტზეა
+     
     public function post() {
         return $this->belongsTo(Post::class);
     }
 
-    // პასუხები (ქვეკომენტარები)
+     
     public function replies() {
         return $this->hasMany(Comment::class, 'parent_id');
     }

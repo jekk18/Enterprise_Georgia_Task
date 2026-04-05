@@ -7,74 +7,75 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use App\Http\Requests\LoginRequest;
+use App\Http\Requests\RegisterRequest;
 
 class AuthController extends Controller
 { 
-    public function showLogin() {
+    public function showLogin($locale) {
         return view('auth.login');
     }
  
-   public function login(Request $request) {
-    $credentials = $request->validate([
-        'email' => ['required', 'email'],
-        'password' => ['required'],
-    ]);
+    public function login(LoginRequest $request, $locale) { 
 
-    if (Auth::attempt($credentials)) {
-        $request->session()->regenerate();
-        
-        $user = Auth::user();
- 
-        if ($user->isAdmin()) {
-            return redirect()->route('admin.users');
-        } elseif ($user->isModerator()) {
-            return redirect()->route('moderator.dashboard');
+        $credentials = $request->only('email', 'password');
+
+        if (Auth::attempt($credentials)) {
+            $request->session()->regenerate();
+            
+            $user = Auth::user();
+
+            // რედირექტი როლების მიხედვით ენის გათვალისწინებით
+            if ($user->isAdmin()) {
+                return redirect()->route('admin.users', ['locale' => $locale]);
+            } elseif ($user->isModerator()) {
+                return redirect()->route('moderator.dashboard', ['locale' => $locale]);
+            }
+
+            // intended() ფუნქციასაც უნდა ჰქონდეს ლოკალი
+            return redirect()->intended($locale . '/profile');
         }
- 
-        return redirect()->intended('/profile');
+
+        return back()->withErrors(['email' => __('messages.login_error')]);
     }
 
-    return back()->withErrors(['email' => 'მონაცემები არასწორია']);
-} 
-
- public function showRegister() {
+    public function showRegister($locale) {
         return view('auth.register');
     }
 
-public function register(Request $request) {
-    $request->validate([
-        'name' => 'required|string|max:255',
-        'email' => 'required|string|email|max:255|unique:users',
-        'password' => 'required|string|min:2|confirmed', // confirmed ითხოვს password_confirmation ველს
-    ]);
+    public function register(RegisterRequest $request, $locale) { 
+            
+        $userRole = Role::where('name', 'user')->first();
+        
+        $user = User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+            'role_id' => $userRole->id, 
+        ]);
 
-    $userRole = Role::where('name', 'user')->first();
-    $user = User::create([
-        'name' => $request->name,
-        'email' => $request->email,
-        'password' => Hash::make($request->password),
-        'role_id' => $userRole->id, // ყველა ახალი დარეგისტრირებული არის "User"
-    ]);
+        Auth::login($user);
 
-    Auth::login($user);
-
-    return redirect()->route('profile')->with('success', 'რეგისტრაცია წარმატებით გაიარეთ!');
-}
+        return redirect()->route('profile', ['locale' => $locale])
+                         ->with('success', __('messages.registration_success'));
+    }
    
-public function profile() {
-    $user = Auth::user();
+    public function profile($locale) {
+        $user = Auth::user();
+    
+        $user->load(['posts' => function ($query) {
+            $query->latest(); 
+        }]);
+    
+        return view('profile.profile', compact('user'));
+    }
  
-    $user->load(['posts' => function ($query) {
-        $query->latest(); 
-    }]);
- 
-    return view('profile.profile', compact('user'));
-}
- 
-    public function logout(Request $request) {
+    public function logout(Request $request, $locale) {
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        return redirect('/login');
+        
+        // ლოგაუტის შემდეგ ისევ ლოგინის გვერდზე ენის შენარჩუნებით
+        return redirect()->route('login', ['locale' => $locale]);
     }
 }

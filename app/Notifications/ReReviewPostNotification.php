@@ -22,18 +22,11 @@ class ReReviewPostNotification extends Notification
         $this->adminName = $adminName;
     }
 
-    /**
-     * განსაზღვრავს, სად უნდა შეინახოს ნოთიფიკაცია. 
-     * 'database' ნიშნავს, რომ ჩაიწერება notifications ცხრილში.
-     */
     public function via($notifiable)
     {
         return ['database'];
     }
-
-    /**
-     * მონაცემები, რომლებიც შეინახება ბაზაში 'data' სვეტში.
-     */
+ 
     public function toArray($notifiable)
     {
         return [

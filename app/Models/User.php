@@ -48,29 +48,29 @@ class User extends Authenticatable
         ];
     }
 
-public function role()
-{
-    return $this->belongsTo(Role::class);
-}
-  
-public function isAdmin() {
-    return $this->role->name === 'admin';
-}
+    public function role()
+    {
+        return $this->belongsTo(Role::class);
+    }
+    
+    public function isAdmin() {
+        return $this->role->name === 'admin';
+    }
 
-public function isModerator() {
-    return $this->role->name === 'moderator';
-}
+    public function isModerator() {
+        return $this->role->name === 'moderator';
+    }
 
-public function isUser() {
-    return $this->role->name === 'user';
-}
+    public function isUser() {
+        return $this->role->name === 'user';
+    }
 
-public function hasRole($roleName)
-{
-    return $this->role->name === $roleName;
-}
-public function posts()
-{
-    return $this->hasMany(Post::class);
-}
+    public function hasRole($roleName)
+    {
+        return $this->role->name === $roleName;
+    }
+    public function posts()
+    {
+        return $this->hasMany(Post::class);
+    }
 }

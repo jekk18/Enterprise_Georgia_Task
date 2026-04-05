@@ -1,17 +1,17 @@
 <x-layout>
-   <div class="max-w-7xl mx-auto px-4 py-10 space-y-8">
+<div class="max-w-7xl mx-auto px-4 py-10 space-y-8">
 
     {{-- Header სექცია --}}
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
         <div>
-            <h1 class="text-2xl font-bold text-gray-800 tracking-tight">⚖️ მოდერატორის პანელი</h1>
-            <p class="text-gray-500 mt-1">აქ ხედავთ პოსტებს, რომლებიც ელოდებიან დადასტურებას ან ხელახალ განხილვას.</p>
+            <h1 class="text-2xl font-bold text-gray-800 tracking-tight">⚖️ {{ __('messages.moderator_panel') }}</h1>
+            <p class="text-gray-500 mt-1">{{ __('messages.moderator_subtitle') }}</p>
         </div>
-        <a href="{{ route('profile') }}" class="flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-800 transition">
+        <a href="{{ route('profile', app()->getLocale()) }}" class="flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-800 transition">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
-            უკან პროფილზე
+            {{ __('messages.back_to_profile') }}
         </a>
     </div>
 
@@ -34,7 +34,7 @@
     {{-- ნოთიფიკაციების ბლოკი --}}
     <div class="grid grid-cols-1 gap-4">
         <h4 class="text-lg font-bold text-gray-700 flex items-center gap-2 px-2">
-            🔔 ახალი მოთხოვნები
+            🔔 {{ __('messages.new_requests') }}
             @if(Auth::user()->unreadNotifications->count() > 0)
                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
                     {{ Auth::user()->unreadNotifications->count() }}
@@ -47,14 +47,14 @@
                 <div class="bg-amber-50 border border-amber-200 p-4 rounded-xl flex justify-between items-start gap-4 shadow-sm hover:shadow-md transition">
                     <div class="space-y-1">
                         <p class="text-sm text-amber-900 font-medium leading-snug">
-                            {{ $notification->data['message'] }}
+                            {{ $notification->data['message'] ?? __('messages.new_notification') }}
                         </p>
                         @if(isset($notification->data['author']))
-                            <span class="text-xs text-amber-700 block italic">ავტორი: {{ $notification->data['author'] }}</span>
+                            <span class="text-xs text-amber-700 block italic">{{ __('messages.author') }}: {{ $notification->data['author'] }}</span>
                         @endif
                         <span class="text-[10px] text-amber-600 block">{{ $notification->created_at->diffForHumans() }}</span>
                     </div>
-                    <form action="{{ route('notifications.read', $notification->id) }}" method="POST">
+                    <form action="{{ route('notifications.read', ['locale' => app()->getLocale(), 'id' => $notification->id]) }}" method="POST">
                         @csrf
                         <button type="submit" class="bg-white hover:bg-amber-100 text-amber-800 border border-amber-300 px-3 py-1 rounded-lg text-xs font-bold transition">
                             OK
@@ -63,7 +63,7 @@
                 </div>
             @empty
                 <div class="col-span-full py-6 text-center bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl">
-                    <p class="text-gray-400 italic">ახალი შეტყობინებები არ არის.</p>
+                    <p class="text-gray-400 italic">{{ __('messages.no_notifications') }}</p>
                 </div>
             @endforelse
         </div>
@@ -75,11 +75,11 @@
             <table class="w-full text-left border-collapse">
                 <thead>
                     <tr class="bg-gray-50/50 border-b border-gray-100">
-                        <th class="p-4 text-xs font-bold uppercase text-gray-500 tracking-wider">ავტორი & ფოტო</th>
-                        <th class="p-4 text-xs font-bold uppercase text-gray-500 tracking-wider">სათაური</th>
-                        <th class="p-4 text-xs font-bold uppercase text-gray-500 tracking-wider">კატეგორია</th>
-                        <th class="p-4 text-xs font-bold uppercase text-gray-500 tracking-wider">აღწერა</th>
-                        <th class="p-4 text-xs font-bold uppercase text-gray-500 tracking-wider text-right">მოქმედება</th>
+                        <th class="p-4 text-xs font-bold uppercase text-gray-500 tracking-wider">{{ __('messages.author_photo') }}</th>
+                        <th class="p-4 text-xs font-bold uppercase text-gray-500 tracking-wider">{{ __('messages.title') }}</th>
+                        <th class="p-4 text-xs font-bold uppercase text-gray-500 tracking-wider">{{ __('messages.category') }}</th>
+                        <th class="p-4 text-xs font-bold uppercase text-gray-500 tracking-wider">{{ __('messages.description') }}</th>
+                        <th class="p-4 text-xs font-bold uppercase text-gray-500 tracking-wider text-right">{{ __('messages.action') }}</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-50">
@@ -112,20 +112,22 @@
                             </td>
                             <td class="p-4 text-right">
                                 <div class="flex justify-end gap-2">
-                                    <form action="{{ route('moderator.updateStatus', $post->id) }}" method="POST">
+                                    {{-- სტატუსის განახლება (Approve) --}}
+                                    <form action="{{ route('moderator.updateStatus', ['locale' => app()->getLocale(), 'post' => $post->id]) }}" method="POST">
                                         @csrf
                                         <input type="hidden" name="status" value="approved">
-                                        <button type="submit" class="bg-green-600 hover:bg-green-700 text-white p-2 rounded-lg transition shadow-sm hover:shadow-green-100 group" title="დადასტურება">
+                                        <button type="submit" class="bg-green-600 hover:bg-green-700 text-white p-2 rounded-lg transition shadow-sm hover:shadow-green-100 group" title="{{ __('messages.approve') }}">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                                             </svg>
                                         </button>
                                     </form>
 
-                                    <form action="{{ route('moderator.updateStatus', $post->id) }}" method="POST">
+                                    {{-- სტატუსის განახლება (Reject) --}}
+                                    <form action="{{ route('moderator.updateStatus', ['locale' => app()->getLocale(), 'post' => $post->id]) }}" method="POST">
                                         @csrf
                                         <input type="hidden" name="status" value="rejected">
-                                        <button type="submit" class="bg-red-50 hover:bg-red-100 text-red-600 p-2 rounded-lg transition border border-red-100 group" title="უარყოფა">
+                                        <button type="submit" class="bg-red-50 hover:bg-red-100 text-red-600 p-2 rounded-lg transition border border-red-100 group" title="{{ __('messages.reject') }}">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                                             </svg>
@@ -141,7 +143,7 @@
                                     <div class="h-16 w-16 bg-gray-50 rounded-full flex items-center justify-center mb-4 text-gray-300">
                                         <svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
                                     </div>
-                                    <p class="text-gray-400 font-medium">ამჟამად დასამტკიცებელი პოსტები არ არის.</p>
+                                    <p class="text-gray-400 font-medium">{{ __('messages.no_pending_posts') }}</p>
                                 </div>
                             </td>
                         </tr>

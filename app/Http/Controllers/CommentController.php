@@ -6,53 +6,45 @@ use App\Models\Comment;
 use App\Models\Post;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Requests\CommentRequest;
 
 class CommentController extends Controller
-{
-    // 1. კომენტარის ან პასუხის დამატება
-    public function store(Request $request, Post $post)
-    {
-        $request->validate([
-            'content' => 'required|string|max:1000',
-            'parent_id' => 'nullable|exists:comments,id' // თუ პასუხია, უნდა არსებობდეს მშობელი
-        ]);
-
+{ 
+    // დავამატეთ $locale პარამეტრი
+    public function store(CommentRequest $request, $locale, Post $post)
+    { 
         Comment::create([
             'user_id' => Auth::id(),
             'post_id' => $post->id,
             'parent_id' => $request->parent_id,
             'content' => $request->content,
+            'locale' => $locale, // ვინახავთ მიმდინარე ენას
         ]);
 
-        return back()->with('success', 'კომენტარი წარმატებით დაემატა!');
+        return back()->with('success', __('messages.comment_added'));
     }
-
-    // 2. კომენტარის რედაქტირება (პუნქტი 5: Edited სტატუსი)
-    public function update(Request $request, Comment $comment)
-    {
-        // უსაფრთხოების შემოწმება: მხოლოდ ავტორს შეუძლია
+ 
+    public function update(CommentRequest $request, $locale, Comment $comment)
+    {  
         if (Auth::id() !== $comment->user_id) {
             abort(403);
         }
 
-        $request->validate(['content' => 'required|string|max:1000']);
-
         $comment->update([
             'content' => $request->content,
-            'is_edited' => true // ვნიშნავთ, რომ რედაქტირებულია
+            'is_edited' => true  
         ]);
 
-        return back()->with('success', 'კომენტარი განახლდა!');
+        return back()->with('success', __('messages.comment_updated'));
     }
-
-    // 3. კომენტარის წაშლა
-    public function destroy(Comment $comment)
+ 
+    public function destroy($locale, Comment $comment)
     {
         if (Auth::id() !== $comment->user_id) {
             abort(403);
         }
 
         $comment->delete();
-        return back()->with('success', 'კომენტარი წაიშალა!');
+        return back()->with('success', __('messages.comment_deleted'));
     }
 }

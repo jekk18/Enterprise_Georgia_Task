@@ -11,14 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-       Schema::create('posts', function (Blueprint $table) {
+      Schema::create('posts', function (Blueprint $table) {
         $table->id();
         $table->foreignId('user_id')->constrained()->onDelete('cascade');  
-        $table->string('title');
-        $table->text('description');
-        $table->string('image')->nullable();  
+        
+        // აქ ვტოვებთ მხოლოდ იმას, რაც საერთოა ყველა ენისთვის
         $table->string('category'); 
         $table->string('status')->default('pending'); 
+        $table->boolean('is_edited')->default(false); // ესეც დავამატოთ
+        
         $table->timestamps();
     });
     }

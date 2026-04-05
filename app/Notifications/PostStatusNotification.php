@@ -5,6 +5,8 @@ namespace App\Notifications;
 use App\Models\Post;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
+// use Illuminate\Contracts\Queue\ShouldQueue;
+// use Illuminate\Notifications\Messages\MailMessage;
 
 class PostStatusNotification extends Notification
 {
@@ -12,21 +14,19 @@ class PostStatusNotification extends Notification
 
     protected $post;
     protected $statusText;
-
-    // კონსტრუქტორით ვიღებთ პოსტს და სტატუსს (დადასტურდა/უარყოფილია)
+ 
     public function __construct(Post $post, $statusText)
     {
         $this->post = $post;
         $this->statusText = $statusText;
     }
-
-    // ვუთითებთ, რომ ნოთიფიკაცია ჩაიწეროს მონაცემთა ბაზაში
+ 
     public function via($notifiable)
-    {
+    { 
         return ['database'];
-    }
 
-    // რა ინფორმაცია შეინახოს ბაზაში 'data' სვეტში
+    }
+ 
     public function toArray($notifiable)
     {
         return [
@@ -34,4 +34,14 @@ class PostStatusNotification extends Notification
             'post_id' => $this->post->id,
         ];
     }
+
+    // public function toMail($notifiable): MailMessage
+    // {
+    //     return (new MailMessage)
+    //         ->subject('სიახლე თქვენი პოსტის შესახებ')  
+    //         ->greeting("გამარჯობა, {$notifiable->name}!")   
+    //         ->line("თქვენი პოსტი '{$this->post->title}' {$this->statusText}.")  
+    //         ->action('პოსტის ნახვა', url('/posts/' . $this->post->id))
+    //         ->line('გმადლობთ, რომ სარგებლობთ ჩვენი პლატფორმით!');  
+    // }
 }

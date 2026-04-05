@@ -16,6 +16,7 @@ return new class extends Migration
         $table->foreignId('user_id')->constrained()->onDelete('cascade');  
         $table->foreignId('post_id')->constrained()->onDelete('cascade');  
         $table->unsignedBigInteger('parent_id')->nullable(); 
+        $table->string('locale', 2)->default('ka')->index();
         $table->text('content');
         $table->boolean('is_edited')->default(false);  
         $table->timestamps();

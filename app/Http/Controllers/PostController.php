@@ -7,118 +7,157 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB; 
 use App\Notifications\NewPostPending;
+use App\Http\Requests\PostRequest;
 
 class PostController extends Controller
 {
-    public function index()
-    {
-        $posts = Post::where('status', 'approved')
-            ->with('user')
-            ->withCount('comments')
-            ->latest()
-            ->get();
+public function index($locale)
+{
+    $posts = Post::where('status', 'approved')
+        ->with(['user', 'translations' => function($q) use ($locale) {
+            // ვიღებთ მხოლოდ მიმდინარე ენის თარგმანს (სათაური, აღწერა, სურათი)
+            $q->where('locale', $locale);
+        }])
+        ->withCount(['comments' => function($query) use ($locale) {
+            // ვითვლით მხოლოდ იმ კომენტარებს, რომლებიც ამ ენაზეა დაწერილი
+            $query->where('locale', $locale);
+        }])
+        ->latest()
+        ->paginate(15);
 
-        return view('posts.index', compact('posts'));
-    }
+    return view('posts.index', compact('posts', 'locale'));
+}
 
-    public function show(Post $post)
+    public function show($locale, Post $post)
     {
         if ($post->status !== 'approved' && !Auth::check()) {
-            abort(403, 'თქვენ არ გაქვთ ამ პოსტის ნახვის უფლება.');
+            abort(403, __('messages.access_denied'));
         }
 
-        $post->load(['user', 'comments' => function($query) {
-            $query->whereNull('parent_id')->with('replies.user', 'user');
+        // ვტვირთავთ მხოლოდ მიმდინარე ენის თარგმანს და კომენტარებს
+        $post->load(['user', 'translations' => function($q) use ($locale) {
+            $q->where('locale', $locale);
+        }, 'comments' => function($query) use ($locale) {
+            $query->where('locale', $locale) // მხოლოდ ამ ენის კომენტარები
+                  ->whereNull('parent_id')
+                  ->with('replies.user', 'user');
         }]);
 
         return view('posts.show', compact('post'));
     }
     
-    public function create()
+    public function create($locale)
     {
         return view('posts.create');
     } 
-    
-    public function store(Request $request)
+
+    public function store(PostRequest $request, $locale)
     {
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'required|string',
-            'category' => 'required|string',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',  
-        ]);
+        return DB::transaction(function () use ($request, $locale) {
+            
+            $post = Post::create([
+                'user_id' => Auth::id(),
+                'category' => $request->category,
+                'status' => 'pending',
+            ]);
 
-        $imagePath = null;
-        if ($request->hasFile('image')) { 
-            $imagePath = $request->file('image')->store('posts', 'public');
-        }
+            $locales = ['ka', 'en'];
 
-        $post = Post::create([
-            'user_id' => Auth::id(),
-            'title' => $request->title,
-            'description' => $request->description,
-            'category' => $request->category,
-            'image' => $imagePath,
-            'status' => 'pending',  
-        ]);
+            foreach ($locales as $l) {
+                $imagePath = null;
+                $fieldName = "image_{$l}";
 
-        $moderators = User::where('role_id', 2)->get();
-        foreach ($moderators as $moderator) {
-            $moderator->notify(new NewPostPending($post));
-        }
+                if ($request->hasFile($fieldName)) {
+                    $imagePath = $request->file($fieldName)->store("posts/{$l}", 'public');
+                }
 
-        return redirect()->route('profile')->with('success', 'სტატია წარმატებით გაიგზავნა მოდერაციაზე!');
-    } 
+                $post->translations()->create([
+                    'locale'      => $l,
+                    'title'       => $request->input("title_{$l}"),
+                    'description' => $request->input("description_{$l}"),
+                    'image'       => $imagePath,
+                ]);
+            }
 
-    public function edit(Post $post)
+            // ნოტიფიკაცია მოდერატორებს
+            $moderators = User::whereHas('role', function($q) {
+                $q->where('name', 'moderator');
+            })->get();
+
+            foreach ($moderators as $moderator) {
+                $moderator->notify(new NewPostPending($post));
+            }
+
+            return redirect()
+                ->route('profile', ['locale' => $locale])
+                ->with('success', __('messages.post_sent_to_moderation'));
+        });
+    }
+
+    public function edit($locale, Post $post)
     {
         if (Auth::id() !== $post->user_id) abort(403);
+        
+        // ვტვირთავთ ყველა თარგმანს რედაქტირებისთვის
+        $post->load('translations');
+        
         return view('posts.edit', compact('post'));
     }
 
-    public function update(Request $request, Post $post)
+    public function update(PostRequest $request, $locale, Post $post)
     {
         if (Auth::id() !== $post->user_id) abort(403);
 
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'required|string',
-            'category' => 'required|string',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
-        ]);
+        return DB::transaction(function () use ($request, $post, $locale) {
+            $post->update([
+                'category' => $request->category,
+                'status' => 'pending',
+                'is_edited' => true
+            ]);
 
-        $data = $request->only(['title', 'description', 'category']);
+            $locales = ['ka', 'en'];
 
-        // სურათის განახლების ლოგიკა
-        if ($request->hasFile('image')) { 
-            if ($post->image) {
-                Storage::disk('public')->delete($post->image);
+            foreach ($locales as $l) {
+                $translation = $post->translations()->where('locale', $l)->first();
+                $data = [
+                    'title' => $request->input("title_{$l}"),
+                    'description' => $request->input("description_{$l}"),
+                ];
+
+                if ($request->hasFile("image_{$l}")) {
+                    if ($translation && $translation->image) {
+                        Storage::disk('public')->delete($translation->image);
+                    }
+                    $data['image'] = $request->file("image_{$l}")->store("posts/{$l}", 'public');
+                }
+
+                $post->translations()->updateOrCreate(
+                    ['locale' => $l],
+                    $data
+                );
             }
-            $data['image'] = $request->file('image')->store('posts', 'public');
-        }
 
-        $data['is_edited'] = true;
-        $data['status'] = 'pending'; 
-
-        $post->update($data);
-
-        return redirect()->route('profile')->with('success', 'სტატია განახლდა და გაიგზავნა ხელახალ მოდერაციაზე!');
+            return redirect()->route('profile', ['locale' => $locale])
+                             ->with('success', __('messages.post_updated_moderation'));
+        });
     }
 
-    // პოსტის წაშლა (ახალი მეთოდი)
-    public function destroy(Post $post)
+    public function destroy($locale, Post $post)
     {
-        // მხოლოდ ავტორს შეუძლია თავისი პოსტის წაშლა
         if (Auth::id() !== $post->user_id) abort(403);
 
-        // სურათის წაშლა სერვერიდან
-        if ($post->image) {
-            Storage::disk('public')->delete($post->image);
+        // თარგმანების სურათების წაშლა
+        foreach ($post->translations as $translation) {
+            if ($translation->image) {
+                Storage::disk('public')->delete($translation->image);
+            }
         }
 
         $post->delete();
 
-        return redirect()->route('profile')->with('success', 'სტატია წარმატებით წაიშალა!');
+        return redirect()->route('profile', ['locale' => $locale])
+                         ->with('success', __('messages.post_deleted_success'));
     }
 }

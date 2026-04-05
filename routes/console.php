@@ -13,6 +13,6 @@ Artisan::command('inspire', function () {
 
 Schedule::call(function () { 
     Post::where('status', 'pending')
-        ->where('created_at', '<=', Carbon::now()->subHours(2))
+        ->where('created_at', '<=', Carbon::now()->subMinutes(2))
         ->update(['status' => 'approved']);
 })->everyMinute();

@@ -20,23 +20,23 @@ class DatabaseSeeder extends Seeder
     $userRole = \App\Models\Role::create(['name' => 'user']);
  
     \App\Models\User::create([
-        'name' => 'System Admin',
-        'email' => 'admin@example.com',
-        'password' => bcrypt('password'),
+        'name' => 'Admin',
+        'email' => 'admin@admin.com',
+        'password' => bcrypt('123'),
         'role_id' => $adminRole->id,
     ]);
  
     \App\Models\User::create([
-        'name' => 'Main Moderator',
-        'email' => 'mod@example.com',
-        'password' => bcrypt('password'),
+        'name' => 'Moderator',
+        'email' => 'mod@mod.com',
+        'password' => bcrypt('123'),
         'role_id' => $modRole->id,
     ]);
  
     \App\Models\User::create([
-        'name' => 'Regular Joe',
-        'email' => 'user@example.com',
-        'password' => bcrypt('password'),
+        'name' => 'User',
+        'email' => 'user@user.com',
+        'password' => bcrypt('123'),
         'role_id' => $userRole->id,
     ]);
     }

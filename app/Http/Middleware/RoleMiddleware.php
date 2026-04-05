@@ -14,13 +14,13 @@ class RoleMiddleware
      *
      * @param  Closure(Request): (Response)  $next
      */
-public function handle(Request $request, Closure $next, string $role): Response
-{
-    if (!auth()->check() || auth()->user()->role->name !== $role) {
-         
-        abort(403, 'თქვენ არ გაქვთ ამ გვერდზე წვდომის უფლება! შესაძლოა თქვენი როლი შეიცვალა.');
-    }
+    public function handle(Request $request, Closure $next, string $role): Response
+    {
+        if (!auth()->check() || auth()->user()->role->name !== $role) {
+            
+            abort(403, 'თქვენ არ გაქვთ ამ გვერდზე წვდომის უფლება! შესაძლოა თქვენი როლი შეიცვალა.');
+        }
 
-    return $next($request);
-}
+        return $next($request);
+    }
 }
